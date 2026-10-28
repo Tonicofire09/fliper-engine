@@ -9,6 +9,8 @@ const LIMITE_LEITURA := 40000
 var editor: EditorInterface
 var dono: Node  # quem segura os HTTPRequest
 var ultima_tela: String = ""  # base64 do último print, para a IA ver
+var ao_vivo := true  # "Live": abre no editor o que a IA mexe e roda o jogo depois de cada teste sem erro
+var _ultimo_jogo := 0
 
 
 func definicoes() -> Array:
@@ -85,7 +87,15 @@ func executar(nome: String, a: Dictionary) -> String:
 			_atualizar(c)
 			return "editado " + c
 		"testar":
-			return _testar(clampi(int(a.get("segundos", 4)), 2, 20))
+			var r := _testar(clampi(int(a.get("segundos", 4)), 2, 20))
+			# ao vivo: passou sem erro → a pessoa vê o jogo de agora rodando (no máximo a cada 20 s)
+			if ao_vivo and editor != null and r.begins_with("SEM ERROS") and Time.get_ticks_msec() - _ultimo_jogo > 20000:
+				_ultimo_jogo = Time.get_ticks_msec()
+				if editor.is_playing_scene():
+					editor.stop_playing_scene()
+				editor.play_main_scene()
+				r += "\n(o jogo abriu para a pessoa ver ao vivo)"
+			return r
 		"rodar":
 			if editor == null:
 				return "ERRO: rodar só funciona dentro do editor"
@@ -128,6 +138,10 @@ func _atualizar(caminho: String) -> void:
 		var s = load(caminho)
 		if s is Script:
 			s.reload(true)
+			if ao_vivo:
+				editor.edit_script(s)  # a pessoa vê o código que a IA acabou de escrever
+	elif ao_vivo and caminho.ends_with(".tscn"):
+		editor.open_scene_from_path(caminho)
 
 
 func _testar(segundos: int) -> String:
