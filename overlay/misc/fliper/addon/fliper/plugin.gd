@@ -22,6 +22,11 @@ func _mostrar() -> void:
 	var abas := painel.get_parent()
 	if abas is TabContainer:
 		abas.current_tab = painel.get_index()
+	# primeiro jogo da Engine: na 1ª vez que abre, já roda o jogo (o mundo 3D é montado ao rodar; parado só aparece a grade)
+	if ProjectSettings.get_setting("fliper/abrir_jogando", false):
+		ProjectSettings.set_setting("fliper/abrir_jogando", false)
+		ProjectSettings.save()
+		get_editor_interface().play_main_scene()
 
 
 func _exit_tree() -> void:

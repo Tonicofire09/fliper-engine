@@ -10,12 +10,12 @@ const FerramentasFliper := preload("res://addons/fliper/ferramentas.gd")
 const TEXTOS := {
 	"pt": {"sub": "IA do estúdio", "novo": "Novo", "ola": "Oi! Eu sou a Fliper.", "conte": "Conte o jogo que você quer: eu programo, desenho, testo e abro para você jogar.",
 		"chave": "sua chave Fliper (flp_…) ou sk-or-…", "modelo": "modelo (vazio = padrão)", "pegar": "Pegar a sua chave Fliper grátis (fliperstudio.com/account)", "entrada": "Diga o que você quer no jogo…",
-		"entrar": "Entrar com a Fliper", "vivo": "Ao vivo", "vivo_dica": "Abre no editor o que a IA mexe e roda o jogo depois de cada teste", "codigo": "Seu código: [b]%s[/b]. Confirme no navegador que abriu (o mesmo código).", "entrou": "Pronto: conectado como [b]%s[/b]. A IA da Fliper é grátis todo dia.", "expirou": "O código expirou ou falhou. Clique em Entrar de novo.", "sem_conta": "Para a IA funcionar: [url=entrar]Entrar com a Fliper[/url] (grátis).",
+		"entrar": "Entrar com a Fliper", "plano_sem": "Sem conta conectada", "plano_dono": "Dono · IA sem limite", "plano_gratis": "Fliper Free · %d de %d hoje · %d créditos", "plano_pago": "Plano pago · %d créditos · grátis: %d de %d hoje", "comprar": "Comprar créditos", "vivo": "Ao vivo", "vivo_dica": "Abre no editor o que a IA mexe e roda o jogo depois de cada teste", "codigo": "Seu código: [b]%s[/b]. Confirme no navegador que abriu (o mesmo código).", "entrou": "Pronto: conectado como [b]%s[/b]. A IA da Fliper é grátis todo dia.", "expirou": "O código expirou ou falhou. Clique em Entrar de novo.", "sem_conta": "Para a IA funcionar: [url=entrar]Entrar com a Fliper[/url] (grátis).",
 		"enviar": "Enviar  (Ctrl+Enter)", "parar": "Parar", "voce": "Você",
 		"sugestoes": ["Faz um jogo de plataforma com moedas", "Coloca um inimigo que persegue o jogador", "Deixa o jogo mais bonito", "Por que o meu jogo dá erro?"]},
 	"en": {"sub": "studio AI", "novo": "New", "ola": "Hi! I'm Fliper.", "conte": "Tell me the game you want: I code it, draw it, test it and open it for you to play.",
 		"chave": "your Fliper key (flp_…) or sk-or-…", "modelo": "model (empty = default)", "pegar": "Get your free Fliper key (fliperstudio.com/account)", "entrada": "Tell me what you want in the game…",
-		"entrar": "Sign in with Fliper", "vivo": "Live", "vivo_dica": "Opens what the AI edits and runs the game after each passing test", "codigo": "Your code: [b]%s[/b]. Approve it in the browser that just opened (same code).", "entrou": "Done: signed in as [b]%s[/b]. The Fliper AI is free every day.", "expirou": "The code expired or failed. Press Sign in again.", "sem_conta": "To use the AI: [url=entrar]Sign in with Fliper[/url] (free).",
+		"entrar": "Sign in with Fliper", "plano_sem": "Not signed in", "plano_dono": "Owner · unlimited AI", "plano_gratis": "Fliper Free · %d of %d left today · %d credits", "plano_pago": "Paid · %d credits · free: %d of %d left today", "comprar": "Buy credits", "vivo": "Live", "vivo_dica": "Opens what the AI edits and runs the game after each passing test", "codigo": "Your code: [b]%s[/b]. Approve it in the browser that just opened (same code).", "entrou": "Done: signed in as [b]%s[/b]. The Fliper AI is free every day.", "expirou": "The code expired or failed. Press Sign in again.", "sem_conta": "To use the AI: [url=entrar]Sign in with Fliper[/url] (free).",
 		"enviar": "Send  (Ctrl+Enter)", "parar": "Stop", "voce": "You",
 		"sugestoes": ["Make a platformer with coins", "Add an enemy that chases the player", "Make the game prettier", "Why does my game crash?"]},
 }
@@ -31,6 +31,8 @@ var escolha: OptionButton
 var campo_chave: LineEdit
 var campo_modelo: LineEdit
 var botao_entrar: Button
+var plano: Label
+var comprar: LinkButton
 var site := "https://fliperstudio.com"  # os testes trocam por um servidor falso
 
 
@@ -48,9 +50,11 @@ func _ready() -> void:
 	agente.falou.connect(_falou)
 	agente.agiu.connect(func(r): conversa.append_text("[color=#8a8a8a]  › %s[/color]\n" % r))
 	agente.terminou.connect(_livre)
+	agente.terminou.connect(_atualizar_plano)
 	_montar()
 	_carregar_config()
 	_boas_vindas()
+	_atualizar_plano()
 
 
 func _montar() -> void:
@@ -102,6 +106,21 @@ func _montar() -> void:
 	ajuda.uri = "https://fliperstudio.com/account#ia"
 	config.add_child(ajuda)
 	add_child(config)
+	# o plano da pessoa, sempre à vista: grátis (quanto sobra hoje), pago (créditos) ou dono
+	var linha := HBoxContainer.new()
+	plano = Label.new()
+	plano.text = T.plano_sem
+	plano.modulate = Color(1, 1, 1, 0.7)
+	plano.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	plano.clip_text = true
+	linha.add_child(plano)
+	comprar = LinkButton.new()
+	comprar.text = T.comprar
+	comprar.uri = "https://fliperstudio.com/account#ia"
+	comprar.add_theme_color_override("font_color", DOURADO)
+	comprar.visible = false
+	linha.add_child(comprar)
+	add_child(linha)
 
 	conversa = RichTextLabel.new()
 	conversa.bbcode_enabled = true
@@ -170,12 +189,49 @@ func _entrar() -> void:
 			_salvar_config()
 			config.visible = false
 			conversa.append_text("[color=#9bff3a]%s[/color]\n\n" % (T.entrou % str(e.get("email", ""))))
+			_atualizar_plano()
 			botao_entrar.disabled = false
 			return
 		if e.get("estado", "") == "expirou":
 			break
 	conversa.append_text("[color=#ff7b7b]%s[/color]\n" % T.expirou)
 	botao_entrar.disabled = false
+
+
+## Mostra o plano (GET /ia/v1/saldo com a chave da conta). Fora da IA Fliper (chave própria), some.
+func _atualizar_plano() -> void:
+	if plano == null:
+		return
+	var chave := campo_chave.text.strip_edges() if campo_chave else ""
+	var fliper := str(escolha.get_item_metadata(escolha.selected)) == "fliper" if escolha and escolha.item_count > 0 else true
+	if not fliper:
+		plano.text = ""
+		comprar.visible = false
+		return
+	if not chave.begins_with("flp_"):
+		plano.text = T.plano_sem
+		comprar.visible = false
+		return
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request(site + "/ia/v1/saldo", ["Authorization: Bearer " + chave])
+	var r = await http.request_completed
+	http.queue_free()
+	var d = JSON.parse_string((r[3] as PackedByteArray).get_string_from_utf8()) if r[0] == HTTPRequest.RESULT_SUCCESS and r[1] == 200 else null
+	if not d is Dictionary:
+		plano.text = T.plano_sem
+		comprar.visible = false
+		return
+	if d.get("dono", false):
+		plano.text = T.plano_dono
+		comprar.visible = false
+	elif str(d.get("plano", "")) == "pago":
+		plano.text = T.plano_pago % [int(d.get("creditos", 0)), int(d.get("gratis_hoje", 0)), int(d.get("gratis_limite", 0))]
+		comprar.visible = true
+	else:
+		plano.text = T.plano_gratis % [int(d.get("gratis_hoje", 0)), int(d.get("gratis_limite", 0)), int(d.get("creditos", 0))]
+		comprar.visible = true
+	plano.tooltip_text = str(d.get("email", ""))
 
 
 func _postar(url: String, corpo: Dictionary) -> Dictionary:
@@ -249,6 +305,8 @@ func _salvar_config() -> void:
 
 
 func _aplicar() -> void:
+	if campo_chave and campo_chave.text.strip_edges().length() == 36 and campo_chave.text.begins_with("flp_"):
+		_atualizar_plano.call_deferred()
 	agente.provedor = str(escolha.get_item_metadata(escolha.selected))
 	agente.chave = campo_chave.text.strip_edges()
 	agente.modelo = campo_modelo.text.strip_edges()
