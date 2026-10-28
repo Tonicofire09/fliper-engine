@@ -33,7 +33,7 @@ jobs:
           python3 motor/misc/fliper/embutir_addon.py
           tar -czf fonte.tgz -C motor --exclude=.git .
       - id: v
-        run: echo "versao=0.1.$(date +%Y%m%d).${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+        run: echo "versao=0.2.$(date +%Y%m%d).${{ github.run_number }}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with: { name: fonte, path: fonte.tgz, retention-days: 2 }
 
@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with: { name: fonte }
       - run: mkdir motor && tar -xzf fonte.tgz -C motor
@@ -57,6 +58,8 @@ jobs:
       - name: Empacotar
         run: |
           mkdir -p dist/FliperEngine && cp motor/bin/godot.linuxbsd.editor.x86_64 dist/FliperEngine/FliperEngine.x86_64
+          cp -r starter "dist/FliperEngine/My first game"
+          printf '#!/bin/sh\ncd "$(dirname "$0")" && exec ./FliperEngine.x86_64 -e --path "My first game"\n' > dist/FliperEngine/fliper.sh && chmod +x dist/FliperEngine/fliper.sh
           cp motor/LICENSE.txt motor/COPYRIGHT.txt dist/FliperEngine/ && tar -czf FliperEngine-linux-x86_64.tar.gz -C dist FliperEngine
       - uses: actions/upload-artifact@v4
         with: { name: linux, path: FliperEngine-linux-x86_64.tar.gz }

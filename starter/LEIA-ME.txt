@@ -1,0 +1,7 @@
+My first game (Fliper Engine)
+
+This is a small 3D game to start from: grab the gems, jump the rolling balls.
+- Press F5 (or the Play button at the top right) to play it.
+- The FLIPER panel on the right is your AI: press "Sign in with Fliper" once, then tell it what to change
+  ("make the arena bigger", "turn it into a farm", "add a second level"...).
+- New games: Project > Quit to Project List, then "+ Create".

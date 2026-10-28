@@ -1,0 +1,248 @@
+@tool
+extends VBoxContainer
+## O painel da Fliper no editor: conversa com a IA, que mexe no projeto aberto.
+## A chave fica nas configurações do editor deste computador (nunca dentro do projeto).
+
+const MAGENTA := Color("#ff2e88")
+const DOURADO := Color("#ffc531")
+const AgenteFliper := preload("res://addons/fliper/agente.gd")
+const FerramentasFliper := preload("res://addons/fliper/ferramentas.gd")
+const TEXTOS := {
+	"pt": {"sub": "IA do estúdio", "novo": "Novo", "ola": "Oi! Eu sou a Fliper.", "conte": "Conte o jogo que você quer: eu programo, desenho, testo e abro para você jogar.",
+		"chave": "sua chave Fliper (flp_…) ou sk-or-…", "modelo": "modelo (vazio = padrão)", "pegar": "Pegar a sua chave Fliper grátis (fliperstudio.com/account)", "entrada": "Diga o que você quer no jogo…",
+		"entrar": "Entrar com a Fliper", "codigo": "Seu código: [b]%s[/b]. Confirme no navegador que abriu (o mesmo código).", "entrou": "Pronto: conectado como [b]%s[/b]. A IA da Fliper é grátis todo dia.", "expirou": "O código expirou ou falhou. Clique em Entrar de novo.", "sem_conta": "Para a IA funcionar: [url=entrar]Entrar com a Fliper[/url] (grátis).",
+		"enviar": "Enviar  (Ctrl+Enter)", "parar": "Parar", "voce": "Você",
+		"sugestoes": ["Faz um jogo de plataforma com moedas", "Coloca um inimigo que persegue o jogador", "Deixa o jogo mais bonito", "Por que o meu jogo dá erro?"]},
+	"en": {"sub": "studio AI", "novo": "New", "ola": "Hi! I'm Fliper.", "conte": "Tell me the game you want: I code it, draw it, test it and open it for you to play.",
+		"chave": "your Fliper key (flp_…) or sk-or-…", "modelo": "model (empty = default)", "pegar": "Get your free Fliper key (fliperstudio.com/account)", "entrada": "Tell me what you want in the game…",
+		"entrar": "Sign in with Fliper", "codigo": "Your code: [b]%s[/b]. Approve it in the browser that just opened (same code).", "entrou": "Done: signed in as [b]%s[/b]. The Fliper AI is free every day.", "expirou": "The code expired or failed. Press Sign in again.", "sem_conta": "To use the AI: [url=entrar]Sign in with Fliper[/url] (free).",
+		"enviar": "Send  (Ctrl+Enter)", "parar": "Stop", "voce": "You",
+		"sugestoes": ["Make a platformer with coins", "Add an enemy that chases the player", "Make the game prettier", "Why does my game crash?"]},
+}
+var T: Dictionary = TEXTOS.en
+
+var editor: EditorInterface
+var agente
+var conversa: RichTextLabel
+var entrada: TextEdit
+var botao: Button
+var config: VBoxContainer
+var escolha: OptionButton
+var campo_chave: LineEdit
+var campo_modelo: LineEdit
+var botao_entrar: Button
+var site := "https://fliperstudio.com"  # os testes trocam por um servidor falso
+
+
+func _ready() -> void:
+	var lingua := str(editor.get_editor_settings().get_setting("interface/editor/editor_language"))
+	T = TEXTOS.pt if lingua.begins_with("pt") else TEXTOS.en
+	custom_minimum_size = Vector2(280, 0)
+	add_theme_constant_override("separation", 6)
+	var ferr = FerramentasFliper.new()
+	ferr.editor = editor
+	ferr.dono = self
+	agente = AgenteFliper.new()
+	agente.ferramentas = ferr
+	agente.dono = self
+	agente.falou.connect(_falou)
+	agente.agiu.connect(func(r): conversa.append_text("[color=#8a8a8a]  › %s[/color]\n" % r))
+	agente.terminou.connect(_livre)
+	_montar()
+	_carregar_config()
+	_boas_vindas()
+
+
+func _montar() -> void:
+	var topo := HBoxContainer.new()
+	var marca := Label.new()
+	marca.text = "FLIPER"
+	marca.add_theme_color_override("font_color", MAGENTA)
+	marca.add_theme_font_size_override("font_size", 18)
+	topo.add_child(marca)
+	var sub := Label.new()
+	sub.text = T.sub
+	sub.modulate = Color(1, 1, 1, 0.55)
+	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	topo.add_child(sub)
+	topo.add_child(_botao(T.novo, T.novo, func(): agente.novo(); conversa.clear(); _boas_vindas()))
+	topo.add_child(_botao("⚙", "Escolher a IA e a chave", func(): config.visible = not config.visible))
+	add_child(topo)
+
+	config = VBoxContainer.new()
+	config.visible = false
+	botao_entrar = Button.new()
+	botao_entrar.text = T.entrar
+	botao_entrar.add_theme_color_override("font_color", MAGENTA)
+	botao_entrar.pressed.connect(_entrar)
+	config.add_child(botao_entrar)
+	escolha = OptionButton.new()
+	for id in AgenteFliper.PROVEDORES:
+		escolha.add_item(AgenteFliper.PROVEDORES[id].nome)
+		escolha.set_item_metadata(escolha.item_count - 1, id)
+	escolha.item_selected.connect(func(_i): _salvar_config())
+	config.add_child(escolha)
+	campo_chave = LineEdit.new()
+	campo_chave.secret = true
+	campo_chave.placeholder_text = T.chave
+	campo_chave.text_changed.connect(func(_t): _salvar_config())
+	config.add_child(campo_chave)
+	campo_modelo = LineEdit.new()
+	campo_modelo.placeholder_text = T.modelo
+	campo_modelo.text_changed.connect(func(_t): _salvar_config())
+	config.add_child(campo_modelo)
+	var ajuda := LinkButton.new()
+	ajuda.text = T.pegar
+	ajuda.uri = "https://fliperstudio.com/account#ia"
+	config.add_child(ajuda)
+	add_child(config)
+
+	conversa = RichTextLabel.new()
+	conversa.bbcode_enabled = true
+	conversa.scroll_following = true
+	conversa.selection_enabled = true
+	conversa.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	conversa.custom_minimum_size = Vector2(0, 240)
+	conversa.meta_clicked.connect(_link)
+	add_child(conversa)
+
+	entrada = TextEdit.new()
+	entrada.placeholder_text = T.entrada
+	entrada.custom_minimum_size = Vector2(0, 70)
+	entrada.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	entrada.gui_input.connect(_tecla)
+	add_child(entrada)
+
+	botao = Button.new()
+	botao.text = T.enviar
+	botao.pressed.connect(_enviar)
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = MAGENTA
+	estilo.set_content_margin_all(8)
+	botao.add_theme_stylebox_override("normal", estilo)
+	botao.add_theme_color_override("font_color", Color.WHITE)
+	add_child(botao)
+
+
+func _botao(texto: String, dica: String, acao: Callable) -> Button:
+	var b := Button.new()
+	b.text = texto
+	b.tooltip_text = dica
+	b.flat = true
+	b.pressed.connect(acao)
+	return b
+
+
+func _link(m) -> void:
+	if str(m) == "entrar":
+		_entrar()
+	elif str(m).begins_with("pedir:"):
+		entrada.text = str(m).trim_prefix("pedir:")
+		_enviar()
+
+
+## "Sign in with Fliper": pede um código ao site, abre o navegador e espera a pessoa aprovar (até 10 min).
+func _entrar() -> void:
+	botao_entrar.disabled = true
+	var app := "engine/" + str(Engine.get_version_info().get("string", "?"))
+	var r := await _postar(site + "/api/conectar", {"acao": "iniciar", "app": app})
+	if not r.get("ok", false):
+		conversa.append_text("[color=#ff7b7b]%s[/color]\n" % T.expirou)
+		botao_entrar.disabled = false
+		return
+	conversa.append_text((T.codigo % r.codigo) + "\n")
+	OS.shell_open(str(r.url))
+	for i in 240:
+		await get_tree().create_timer(2.5).timeout
+		var e := await _postar(site + "/api/conectar", {"acao": "esperar", "segredo": r.segredo})
+		if e.get("estado", "") == "pronto":
+			for k in escolha.item_count:
+				if escolha.get_item_metadata(k) == "fliper":
+					escolha.select(k)
+			campo_chave.text = str(e.chave)
+			campo_modelo.text = ""
+			_salvar_config()
+			config.visible = false
+			conversa.append_text("[color=#9bff3a]%s[/color]\n\n" % (T.entrou % str(e.get("email", ""))))
+			botao_entrar.disabled = false
+			return
+		if e.get("estado", "") == "expirou":
+			break
+	conversa.append_text("[color=#ff7b7b]%s[/color]\n" % T.expirou)
+	botao_entrar.disabled = false
+
+
+func _postar(url: String, corpo: Dictionary) -> Dictionary:
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(corpo))
+	var r = await http.request_completed
+	http.queue_free()
+	var d = JSON.parse_string((r[3] as PackedByteArray).get_string_from_utf8()) if r[0] == HTTPRequest.RESULT_SUCCESS else null
+	return d if d is Dictionary else {}
+
+
+func _boas_vindas() -> void:
+	conversa.append_text("[color=#ff2e88][b]%s[/b][/color]\n%s\n\n" % [T.ola, T.conte])
+	if campo_chave and campo_chave.text.strip_edges() == "":
+		conversa.append_text(T.sem_conta + "\n\n")
+	for s in T.sugestoes:
+		conversa.append_text("[color=#ffc531]›[/color] [url=pedir:%s]%s[/url]\n" % [s, s])
+	conversa.append_text("\n")
+
+
+func _tecla(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and e.keycode == KEY_ENTER and (e.ctrl_pressed or e.meta_pressed):
+		accept_event()
+		_enviar()
+
+
+func _enviar() -> void:
+	if agente.ocupado:
+		agente.parar = true
+		return
+	var t := entrada.text.strip_edges()
+	if t == "":
+		return
+	entrada.text = ""
+	conversa.append_text("[b]%s:[/b] %s\n" % [T.voce, t.replace("[", "[lb]")])
+	botao.text = T.parar
+	agente.pedir(t)
+
+
+func _falou(texto: String) -> void:
+	conversa.append_text("[color=#ff2e88][b]Fliper:[/b][/color] %s\n\n" % texto)
+
+
+func _livre() -> void:
+	botao.text = T.enviar
+
+
+func _carregar_config() -> void:
+	var es := editor.get_editor_settings()
+	var prov := str(es.get_setting("fliper/provedor")) if es.has_setting("fliper/provedor") else "fliper"
+	for i in escolha.item_count:
+		if escolha.get_item_metadata(i) == prov:
+			escolha.select(i)
+	campo_chave.text = str(es.get_setting("fliper/chave")) if es.has_setting("fliper/chave") else ""
+	campo_modelo.text = str(es.get_setting("fliper/modelo")) if es.has_setting("fliper/modelo") else ""
+	_aplicar()
+	if campo_chave.text == "":
+		config.visible = true
+
+
+func _salvar_config() -> void:
+	if editor == null:  # teste fora do editor
+		_aplicar()
+		return
+	var es := editor.get_editor_settings()
+	es.set_setting("fliper/provedor", escolha.get_item_metadata(escolha.selected))
+	es.set_setting("fliper/chave", campo_chave.text.strip_edges())
+	es.set_setting("fliper/modelo", campo_modelo.text.strip_edges())
+	_aplicar()
+
+
+func _aplicar() -> void:
+	agente.provedor = str(escolha.get_item_metadata(escolha.selected))
+	agente.chave = campo_chave.text.strip_edges()
+	agente.modelo = campo_modelo.text.strip_edges()

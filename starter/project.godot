@@ -1,0 +1,37 @@
+; Projeto gerado pelo Fliper IA kit. Abre no Godot 4.7 sem o Fliper.
+config_version=5
+
+[application]
+
+config/name="My first game"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+Nucleo="*res://scripts/nucleo/nucleo.gd"
+Partida="*res://scripts/modulos/mod_partida.gd"
+Som="*res://scripts/modulos/mod_som.gd"
+Jogador="*res://scripts/modulos/mod_jogador.gd"
+Gemas="*res://scripts/modulos/mod_gemas.gd"
+Perigos="*res://scripts/modulos/mod_perigos.gd"
+Visual="*res://scripts/modulos/mod_visual.gd"
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="viewport"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+anti_aliasing/quality/msaa_3d=2
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/fliper/plugin.cfg")
