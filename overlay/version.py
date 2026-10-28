@@ -1,0 +1,9 @@
+short_name = "godot"
+name = "Fliper Engine"
+major = 4
+minor = 7
+patch = 2
+status = "stable"
+module_config = ""
+website = "https://fliperstudio.com"
+docs = "4.7"

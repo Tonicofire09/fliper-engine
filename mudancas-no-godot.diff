@@ -1,0 +1,101 @@
+--- editor/project_manager/project_dialog.cpp	2026-10-28 16:27:26.571770357 +0000
++++ /home/user/fliper-engine/editor/project_manager/project_dialog.cpp	2026-10-28 13:12:00.471270486 +0000
+@@ -30,6 +30,8 @@
+ 
+ #include "project_dialog.h"
+ 
++#include "fliper_addon_data.h"
++
+ #include "core/config/project_settings.h"
+ #include "core/io/dir_access.h"
+ #include "core/io/zip_io.h"
+@@ -595,6 +597,8 @@
+ 		initial_settings["application/config/features"] = project_features;
+ 		initial_settings["application/config/name"] = project_name->get_text().strip_edges();
+ 		initial_settings["application/config/icon"] = "res://icon.svg";
++		// Fliper: todo projeto novo já nasce com o painel da IA ligado.
++		initial_settings["editor_plugins/enabled"] = PackedStringArray({ "res://addons/fliper/plugin.cfg" });
+ 		ProjectSettings::CustomMap extra_settings = EditorNode::get_initial_settings();
+ 		for (const KeyValue<String, Variant> &extra_setting : extra_settings) {
+ 			// Merge with other initial settings defined above.
+@@ -615,6 +619,18 @@
+ 		}
+ 		fa_icon->store_string(get_default_project_icon());
+ 
++		// Fliper: copia o painel da IA (embutido no editor) para addons/fliper.
++		for (int i = 0; i < fliper_addon_files_count; i++) {
++			const String file_path = path.path_join(fliper_addon_files[i].path);
++			DirAccess::make_dir_recursive_absolute(file_path.get_base_dir());
++			Ref<FileAccess> fa_addon = FileAccess::open(file_path, FileAccess::WRITE);
++			if (fa_addon.is_valid()) {
++				fa_addon->store_string(String::utf8(fliper_addon_files[i].content));
++			} else {
++				ERR_PRINT("Couldn't create the Fliper panel in the project: " + file_path);
++			}
++		}
++
+ 		EditorVCSInterface::create_vcs_metadata_files(EditorVCSInterface::VCSMetadata(vcs_metadata_selection->get_selected()), path);
+ 
+ 		// Ensures external editors and IDEs use UTF-8 encoding.
+--- editor/settings/editor_settings.cpp	2026-10-28 16:27:26.599939954 +0000
++++ /home/user/fliper-engine/editor/settings/editor_settings.cpp	2026-10-28 13:02:46.655362446 +0000
+@@ -606,8 +606,8 @@
+ 	EDITOR_SETTING_BASIC(Variant::STRING, PROPERTY_HINT_ENUM, "interface/theme/color_preset", "Default", "Default,Breeze Dark,Godot 2,Godot 3,Gray,Light,Solarized (Dark),Solarized (Light),Black (OLED),Custom")
+ 	EDITOR_SETTING_BASIC(Variant::STRING, PROPERTY_HINT_ENUM, "interface/theme/spacing_preset", "Default", "Compact,Default,Spacious,Custom")
+ 	EDITOR_SETTING(Variant::INT, PROPERTY_HINT_ENUM, "interface/theme/icon_and_font_color", 0, "Auto,Dark,Light")
+-	EDITOR_SETTING_BASIC(Variant::COLOR, PROPERTY_HINT_NONE, "interface/theme/base_color", Color(0.14, 0.14, 0.14), "")
+-	EDITOR_SETTING_BASIC(Variant::COLOR, PROPERTY_HINT_NONE, "interface/theme/accent_color", Color(0.34, 0.62, 1.0), "")
++	EDITOR_SETTING_BASIC(Variant::COLOR, PROPERTY_HINT_NONE, "interface/theme/base_color", Color(0.082, 0.082, 0.094), "")
++	EDITOR_SETTING_BASIC(Variant::COLOR, PROPERTY_HINT_NONE, "interface/theme/accent_color", Color(1.0, 0.18, 0.533), "")
+ 	EDITOR_SETTING_BASIC(Variant::BOOL, PROPERTY_HINT_NONE, "interface/theme/use_system_accent_color", false, "")
+ 	EDITOR_SETTING_BASIC(Variant::FLOAT, PROPERTY_HINT_RANGE, "interface/theme/contrast", 0.3, "-1,1,0.01")
+ 	EDITOR_SETTING(Variant::BOOL, PROPERTY_HINT_NONE, "interface/theme/draw_extra_borders", false, "")
+--- editor/themes/editor_theme_manager.cpp	2026-10-28 16:27:26.605634474 +0000
++++ /home/user/fliper-engine/editor/themes/editor_theme_manager.cpp	2026-10-28 13:02:46.653719838 +0000
+@@ -356,9 +356,9 @@
+ 				preset_accent_color = Color(0.15, 0.55, 0.82);
+ 				preset_base_color = Color(0.89, 0.86, 0.79);
+ 				preset_contrast = light_contrast;
+-			} else { // Default
+-				preset_accent_color = Color(0.337, 0.62, 1.0);
+-				preset_base_color = Color(0.161, 0.161, 0.161);
++			} else { // Default (Fliper: grafite quase preto + magenta da marca)
++				preset_accent_color = Color(1.0, 0.18, 0.533);
++				preset_base_color = Color(0.082, 0.082, 0.094);
+ 			}
+ 
+ 			config.accent_color = preset_accent_color;
+--- main/main_builders.py	2026-10-28 16:27:26.734582325 +0000
++++ /home/user/fliper-engine/main/main_builders.py	2026-10-28 13:02:46.655972849 +0000
+@@ -11,7 +11,7 @@
+         file.write(f"""\
+ #include "core/math/color.h"
+ 
+-static const Color boot_splash_bg_color = Color(0.14, 0.14, 0.14);
++static const Color boot_splash_bg_color = Color(0.02, 0.02, 0.02);
+ inline constexpr const unsigned char boot_splash_png[] = {{
+ {methods.format_buffer(buffer, 1)}
+ }};
+@@ -27,7 +27,7 @@
+         file.write(f"""\
+ #include "core/math/color.h"
+ 
+-static const Color boot_splash_editor_bg_color = Color(0.125, 0.145, 0.192);
++static const Color boot_splash_editor_bg_color = Color(0.02, 0.02, 0.02);
+ inline constexpr const unsigned char boot_splash_editor_png[] = {{
+ {methods.format_buffer(buffer, 1)}
+ }};
+--- version.py	2026-10-28 16:27:28.346723776 +0000
++++ /home/user/fliper-engine/version.py	2026-10-28 13:02:46.653289228 +0000
+@@ -1,9 +1,9 @@
+ short_name = "godot"
+-name = "Godot Engine"
++name = "Fliper Engine"
+ major = 4
+ minor = 7
+ patch = 2
+ status = "stable"
+ module_config = ""
+-website = "https://godotengine.org"
++website = "https://fliperstudio.com"
+ docs = "4.7"
