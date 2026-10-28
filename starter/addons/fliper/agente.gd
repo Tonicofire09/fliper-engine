@@ -35,7 +35,15 @@ var parar := false
 var ocupado := false
 
 
+var sessao := ""  # uma por conversa: a OpenRouter agrupa os passos (session_id)
+
+
+func _nova_sessao() -> void:
+	sessao = "engine-" + str(Time.get_unix_time_from_system()) + "-" + str(randi() % 100000)
+
+
 func novo() -> void:
+	_nova_sessao()
 	mensagens = [{"role": "system", "content": SISTEMA}]
 
 
@@ -109,8 +117,13 @@ func _chamar() -> Dictionary:
 	var http := HTTPRequest.new()
 	http.timeout = 180
 	dono.add_child(http)
-	var corpo := JSON.stringify({"model": modelo if modelo != "" else p.modelo, "messages": mensagens,
-		"tools": ferramentas.definicoes(), "max_tokens": 6000})
+	if sessao == "":
+		_nova_sessao()
+	var corpo_d := {"model": modelo if modelo != "" else p.modelo, "messages": mensagens,
+		"tools": ferramentas.definicoes(), "max_tokens": 6000}
+	if provedor != "openai":  # a OpenAI direta recusa campo que não conhece
+		corpo_d["session_id"] = sessao
+	var corpo := JSON.stringify(corpo_d)
 	var cab := ["Content-Type: application/json", "Authorization: Bearer " + chave,
 		"HTTP-Referer: https://fliperstudio.com", "X-Title: Fliper Engine",
 		"X-Fliper-Cliente: engine/" + Engine.get_version_info().get("string", "?")]
