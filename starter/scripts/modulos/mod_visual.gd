@@ -12,6 +12,9 @@ const FUNDO := Color("#0b0715")
 var mundo: Node3D
 var camera: Camera3D
 var heroi: Node3D
+var pose: Node3D  # o corpo do herói: sobe-desce, inclina e amassa sem mexer na posição (receita "animacao")
+var _alt_antes := 0.0
+var _pos_antes := Vector2.ZERO
 var gemas: Array = []
 var perigos: Array = []
 var brilhos: Array = []  # [nó, tempo]
@@ -96,11 +99,13 @@ func _montar() -> void:
 	# herói: corpo em cápsula + viseira (mostra para onde olha)
 	heroi = Node3D.new()
 	mundo.add_child(heroi)
-	var corpo := _malha(CapsuleMesh.new(), _mat(Color("#f2f2f2"), 0.0, 0.4), heroi)
+	pose = Node3D.new()
+	heroi.add_child(pose)
+	var corpo := _malha(CapsuleMesh.new(), _mat(Color("#f2f2f2"), 0.0, 0.4), pose)
 	corpo.mesh.radius = 0.4
 	corpo.mesh.height = 1.3
 	corpo.position.y = 0.65
-	var viseira := _malha(BoxMesh.new(), _mat(ROSA, 1.6), heroi)
+	var viseira := _malha(BoxMesh.new(), _mat(ROSA, 1.6), pose)
 	viseira.mesh.size = Vector3(0.5, 0.18, 0.2)
 	viseira.position = Vector3(0, 0.95, 0.35)
 	var sombra := _malha(CylinderMesh.new(), _mat(Color(0, 0, 0, 0.45)), mundo)
@@ -123,6 +128,18 @@ func _process(dt: float) -> void:
 	heroi.position = Vector3(j.pos.x, j.alt, j.pos.y)
 	heroi.rotation.y = lerp_angle(heroi.rotation.y, j.ang, 0.25)
 	heroi.visible = j.protegido <= 0.0 or int(_t * 12.0) % 2 == 0
+	# animação procedural: sobe-desce ao andar, inclina para a frente na corrida, amassa ao pular e ao pousar
+	var vel := (j.pos - _pos_antes).length() / maxf(dt, 0.001)
+	_pos_antes = j.pos
+	var andando := vel > 0.5 and j.alt <= 0.0
+	pose.position.y = lerpf(pose.position.y, absf(sin(_t * 10.0)) * 0.06 if andando else 0.0, 0.5)
+	pose.rotation.x = lerpf(pose.rotation.x, clampf(vel * 0.03, 0.0, 0.17), 0.2)
+	pose.rotation.z = sin(_t * 10.0) * 0.06 if andando else lerpf(pose.rotation.z, 0.0, 0.3)
+	if _alt_antes <= 0.0 and j.alt > 0.0:
+		Nucleo.amassar(pose, 0.85, 1.2, 0.3)
+	elif _alt_antes > 0.0 and j.alt <= 0.0:
+		Nucleo.amassar(pose, 1.25, 0.8, 0.3)
+	_alt_antes = j.alt
 	var sombra := mundo.get_node("Sombra") as Node3D
 	sombra.position = Vector3(j.pos.x, 0.02, j.pos.y)
 	sombra.scale = Vector3.ONE * clampf(1.0 - j.alt * 0.2, 0.4, 1.0)
@@ -181,6 +198,7 @@ func evento(nome: String, d: Dictionary) -> void:
 		return
 	if nome == "tremer":
 		tremor = float(d.get("forca", 5.0))
+		Nucleo.congelar(0.06)  # o golpe "pega": um instante parado antes do tremor
 	elif nome == "gema":
 		pendentes.append([float(d.x), float(d.z), Nucleo.quadro])
 

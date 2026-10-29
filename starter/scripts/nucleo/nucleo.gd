@@ -68,7 +68,8 @@ func animacoes(caminho_png: String) -> SpriteFrames:
 			var at := AtlasTexture.new()
 			at.atlas = tex
 			at.region = Rect2(i * float(q.largura), float(a.linha) * float(q.altura), float(q.largura), float(q.altura))
-			sf.add_frame(nome, at)
+			# duração por quadro (antecipação curta, impacto segurado): vem de animar_acoes
+			sf.add_frame(nome, at, float(a.duracoes[i]) if a.has("duracoes") else 1.0)
 	return sf
 
 
@@ -175,3 +176,65 @@ func carregar(caminho := SAVE) -> bool:
 		return false
 	aplicar(d)
 	return true
+
+
+# ---------- game feel (receita "animacao"): só visual, nunca mexe na simulação nem nos testes ----------
+var _trauma := 0.0
+var _camera_tremendo: Node = null
+
+
+func _sem_tela() -> bool:
+	return em_teste or DisplayServer.get_name() == "headless"
+
+
+## Congela o jogo por um instante no impacto (0,05 a 0,1 s em golpe forte; menos que isso ninguém sente).
+func congelar(segundos := 0.07) -> void:
+	if _sem_tela() or Engine.time_scale < 1.0:
+		return
+	Engine.time_scale = 0.05
+	await get_tree().create_timer(segundos, true, false, true).timeout
+	Engine.time_scale = 1.0
+
+
+## Treme a câmera (Camera2D ou Camera3D). forca 0..1 soma no trauma, que decai sozinho em ~0,3 s.
+func tremer(camera: Node, forca := 0.4) -> void:
+	if _sem_tela() or camera == null:
+		return
+	_trauma = minf(1.0, _trauma + forca)
+	_camera_tremendo = camera
+
+
+## Amassa/estica um sprite ou malha e volta com mola. 2D: (x, y). 3D: x vale para x e z.
+func amassar(no: Node, x := 1.3, y := 0.7, volta := 0.25) -> void:
+	if _sem_tela() or no == null or not ("scale" in no):
+		return
+	var normal = Vector2.ONE if no is Node2D or no is Control else Vector3.ONE
+	no.scale = Vector2(x, y) if normal is Vector2 else Vector3(x, y, x)
+	var tw := no.create_tween()
+	tw.tween_property(no, "scale", normal, volta).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## Clarão branco rápido (dano): modulate sobe e volta.
+func piscar(no: CanvasItem, vezes := 2) -> void:
+	if _sem_tela() or no == null:
+		return
+	var tw := no.create_tween()
+	for i in vezes:
+		tw.tween_property(no, "modulate", Color(3, 3, 3), 0.04)
+		tw.tween_property(no, "modulate", Color.WHITE, 0.06)
+
+
+func _process(dt: float) -> void:
+	if _camera_tremendo == null or not is_instance_valid(_camera_tremendo):
+		return
+	_trauma = maxf(0.0, _trauma - dt * 3.0)
+	var t := _trauma * _trauma  # quadrado: tremor pequeno some rápido, grande pesa
+	var dx := randf_range(-1, 1) * t
+	var dy := randf_range(-1, 1) * t
+	if _camera_tremendo is Camera2D:
+		_camera_tremendo.offset = Vector2(dx, dy) * 12.0
+	elif _camera_tremendo is Camera3D:
+		_camera_tremendo.h_offset = dx * 0.3
+		_camera_tremendo.v_offset = dy * 0.3
+	if _trauma == 0.0:
+		_camera_tremendo = null
