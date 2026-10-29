@@ -10,12 +10,12 @@ const FerramentasFliper := preload("res://addons/fliper/ferramentas.gd")
 const TEXTOS := {
 	"pt": {"sub": "IA do estúdio", "novo": "Novo", "ola": "Oi! Eu sou a Fliper.", "conte": "Conte o jogo que você quer: eu programo, desenho, testo e abro para você jogar.",
 		"chave": "sua chave Fliper (flp_…) ou sk-or-…", "modelo": "modelo (vazio = padrão)", "pegar": "Pegar a sua chave Fliper grátis (fliperstudio.com/account)", "entrada": "Diga o que você quer no jogo…",
-		"entrar": "Entrar com a Fliper", "plano_sem": "Sem conta conectada", "plano_dono": "Dono · IA sem limite", "plano_gratis": "Fliper Free · %d de %d restam (volta a cada 5 h)", "plano_pago": "Fliper %s · ≈%.1f h de IA restam · semana %d%%", "comprar": "Assinar o Pro", "subir": "Ir para o Max", "vivo": "Ao vivo", "vivo_dica": "Abre no editor o que a IA mexe e roda o jogo depois de cada teste", "codigo": "Seu código: [b]%s[/b]. Confirme no navegador que abriu (o mesmo código).", "entrou": "Pronto: conectado como [b]%s[/b]. A IA da Fliper é grátis todo dia.", "expirou": "O código expirou ou falhou. Clique em Entrar de novo.", "sem_conta": "Para a IA funcionar: [url=entrar]Entrar com a Fliper[/url] (grátis).",
+		"entrar": "Entrar com a Fliper", "plano_sem": "Sem conta conectada", "plano_dono": "Dono · IA sem limite", "plano_gratis": "Fliper Free · %d de %d restam (volta a cada 5 h)", "plano_pago": "Fliper %s · ≈%.1f h de IA restam · semana %d%%", "comprar": "Assinar o Pro", "subir": "Ir para o %s", "vivo": "Ao vivo", "vivo_dica": "Abre no editor o que a IA mexe e roda o jogo depois de cada teste", "codigo": "Seu código: [b]%s[/b]. Confirme no navegador que abriu (o mesmo código).", "entrou": "Pronto: conectado como [b]%s[/b]. A IA da Fliper é grátis todo dia.", "expirou": "O código expirou ou falhou. Clique em Entrar de novo.", "sem_conta": "Para a IA funcionar: [url=entrar]Entrar com a Fliper[/url] (grátis).",
 		"enviar": "Enviar  (Ctrl+Enter)", "parar": "Parar", "voce": "Você",
 		"sugestoes": ["Faz um jogo de plataforma com moedas", "Coloca um inimigo que persegue o jogador", "Deixa o jogo mais bonito", "Por que o meu jogo dá erro?"]},
 	"en": {"sub": "studio AI", "novo": "New", "ola": "Hi! I'm Fliper.", "conte": "Tell me the game you want: I code it, draw it, test it and open it for you to play.",
 		"chave": "your Fliper key (flp_…) or sk-or-…", "modelo": "model (empty = default)", "pegar": "Get your free Fliper key (fliperstudio.com/account)", "entrada": "Tell me what you want in the game…",
-		"entrar": "Sign in with Fliper", "plano_sem": "Not signed in", "plano_dono": "Owner · unlimited AI", "plano_gratis": "Fliper Free · %d of %d left (refills every 5 h)", "plano_pago": "Fliper %s · ≈%.1f h of AI left · week %d%%", "comprar": "Get Pro", "subir": "Upgrade to Max", "vivo": "Live", "vivo_dica": "Opens what the AI edits and runs the game after each passing test", "codigo": "Your code: [b]%s[/b]. Approve it in the browser that just opened (same code).", "entrou": "Done: signed in as [b]%s[/b]. The Fliper AI is free every day.", "expirou": "The code expired or failed. Press Sign in again.", "sem_conta": "To use the AI: [url=entrar]Sign in with Fliper[/url] (free).",
+		"entrar": "Sign in with Fliper", "plano_sem": "Not signed in", "plano_dono": "Owner · unlimited AI", "plano_gratis": "Fliper Free · %d of %d left (refills every 5 h)", "plano_pago": "Fliper %s · ≈%.1f h of AI left · week %d%%", "comprar": "Get Pro", "subir": "Upgrade to %s", "vivo": "Live", "vivo_dica": "Opens what the AI edits and runs the game after each passing test", "codigo": "Your code: [b]%s[/b]. Approve it in the browser that just opened (same code).", "entrou": "Done: signed in as [b]%s[/b]. The Fliper AI is free every day.", "expirou": "The code expired or failed. Press Sign in again.", "sem_conta": "To use the AI: [url=entrar]Sign in with Fliper[/url] (free).",
 		"enviar": "Send  (Ctrl+Enter)", "parar": "Stop", "voce": "You",
 		"sugestoes": ["Make a platformer with coins", "Add an enemy that chases the player", "Make the game prettier", "Why does my game crash?"]},
 }
@@ -227,15 +227,17 @@ func _atualizar_plano() -> void:
 	if d.get("dono", false):
 		plano.text = T.plano_dono
 		comprar.visible = false
-	elif str(d.get("plano", "")) in ["pro", "max"]:
+	elif str(d.get("plano", "")) in ["pro", "max", "ultra"]:
 		var p := str(d.get("plano"))
 		plano.text = T.plano_pago % [str(d.get("plano_nome", p)), float(d.get("janela_horas", 0)), int(d.get("semana_pct", 0))]
+		# um degrau acima: Pro → Max → Ultra
+		var prox := "max" if p == "pro" else ("ultra" if p == "max" else "")
 		var links = d.get("assinar", {})
-		comprar.visible = p == "pro"
-		comprar.text = T.subir
-		if links is Dictionary and links.get("max"):
-			comprar.uri = str(links.get("max"))
-		plano_modelo = "fliper-" + p
+		comprar.visible = prox != ""
+		comprar.text = T.subir % prox.capitalize()
+		if prox != "" and links is Dictionary and links.get(prox):
+			comprar.uri = str(links.get(prox))
+		plano_modelo = "fliper-pro" if p == "pro" else "fliper-max"
 	else:
 		plano.text = T.plano_gratis % [int(d.get("gratis_hoje", 0)), int(d.get("gratis_limite", 0))]
 		var links = d.get("assinar", {})
