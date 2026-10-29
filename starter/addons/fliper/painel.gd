@@ -10,12 +10,12 @@ const FerramentasFliper := preload("res://addons/fliper/ferramentas.gd")
 const TEXTOS := {
 	"pt": {"sub": "IA do estúdio", "novo": "Novo", "ola": "Oi! Eu sou a Fliper.", "conte": "Conte o jogo que você quer: eu programo, desenho, testo e abro para você jogar.",
 		"chave": "sua chave Fliper (flp_…) ou sk-or-…", "modelo": "modelo (vazio = padrão)", "pegar": "Pegar a sua chave Fliper grátis (fliperstudio.com/account)", "entrada": "Diga o que você quer no jogo…",
-		"entrar": "Entrar com a Fliper", "plano_sem": "Sem conta conectada", "plano_dono": "Dono · IA sem limite", "plano_gratis": "Fliper Free · %d de %d restam · %d créditos", "plano_pago": "Plano pago · %d créditos · grátis: %d de %d restam", "comprar": "Comprar créditos", "vivo": "Ao vivo", "vivo_dica": "Abre no editor o que a IA mexe e roda o jogo depois de cada teste", "codigo": "Seu código: [b]%s[/b]. Confirme no navegador que abriu (o mesmo código).", "entrou": "Pronto: conectado como [b]%s[/b]. A IA da Fliper é grátis todo dia.", "expirou": "O código expirou ou falhou. Clique em Entrar de novo.", "sem_conta": "Para a IA funcionar: [url=entrar]Entrar com a Fliper[/url] (grátis).",
+		"entrar": "Entrar com a Fliper", "plano_sem": "Sem conta conectada", "plano_dono": "Dono · IA sem limite", "plano_gratis": "Fliper Free · %d de %d restam (volta a cada 5 h)", "plano_pago": "Fliper %s · %d%% das 5 h usado · semana %d%%", "comprar": "Assinar o Pro", "subir": "Ir para o Max", "vivo": "Ao vivo", "vivo_dica": "Abre no editor o que a IA mexe e roda o jogo depois de cada teste", "codigo": "Seu código: [b]%s[/b]. Confirme no navegador que abriu (o mesmo código).", "entrou": "Pronto: conectado como [b]%s[/b]. A IA da Fliper é grátis todo dia.", "expirou": "O código expirou ou falhou. Clique em Entrar de novo.", "sem_conta": "Para a IA funcionar: [url=entrar]Entrar com a Fliper[/url] (grátis).",
 		"enviar": "Enviar  (Ctrl+Enter)", "parar": "Parar", "voce": "Você",
 		"sugestoes": ["Faz um jogo de plataforma com moedas", "Coloca um inimigo que persegue o jogador", "Deixa o jogo mais bonito", "Por que o meu jogo dá erro?"]},
 	"en": {"sub": "studio AI", "novo": "New", "ola": "Hi! I'm Fliper.", "conte": "Tell me the game you want: I code it, draw it, test it and open it for you to play.",
 		"chave": "your Fliper key (flp_…) or sk-or-…", "modelo": "model (empty = default)", "pegar": "Get your free Fliper key (fliperstudio.com/account)", "entrada": "Tell me what you want in the game…",
-		"entrar": "Sign in with Fliper", "plano_sem": "Not signed in", "plano_dono": "Owner · unlimited AI", "plano_gratis": "Fliper Free · %d of %d left · %d credits", "plano_pago": "Paid · %d credits · free: %d of %d left", "comprar": "Buy credits", "vivo": "Live", "vivo_dica": "Opens what the AI edits and runs the game after each passing test", "codigo": "Your code: [b]%s[/b]. Approve it in the browser that just opened (same code).", "entrou": "Done: signed in as [b]%s[/b]. The Fliper AI is free every day.", "expirou": "The code expired or failed. Press Sign in again.", "sem_conta": "To use the AI: [url=entrar]Sign in with Fliper[/url] (free).",
+		"entrar": "Sign in with Fliper", "plano_sem": "Not signed in", "plano_dono": "Owner · unlimited AI", "plano_gratis": "Fliper Free · %d of %d left (refills every 5 h)", "plano_pago": "Fliper %s · %d%% of 5 h used · week %d%%", "comprar": "Get Pro", "subir": "Upgrade to Max", "vivo": "Live", "vivo_dica": "Opens what the AI edits and runs the game after each passing test", "codigo": "Your code: [b]%s[/b]. Approve it in the browser that just opened (same code).", "entrou": "Done: signed in as [b]%s[/b]. The Fliper AI is free every day.", "expirou": "The code expired or failed. Press Sign in again.", "sem_conta": "To use the AI: [url=entrar]Sign in with Fliper[/url] (free).",
 		"enviar": "Send  (Ctrl+Enter)", "parar": "Stop", "voce": "You",
 		"sugestoes": ["Make a platformer with coins", "Add an enemy that chases the player", "Make the game prettier", "Why does my game crash?"]},
 }
@@ -33,6 +33,8 @@ var campo_modelo: LineEdit
 var botao_entrar: Button
 var plano: Label
 var comprar: LinkButton
+## modelo do plano (fliper-pro / fliper-max): usado quando o campo de modelo está vazio
+var plano_modelo := ""
 var site := "https://fliperstudio.com"  # os testes trocam por um servidor falso
 
 
@@ -116,7 +118,7 @@ func _montar() -> void:
 	linha.add_child(plano)
 	comprar = LinkButton.new()
 	comprar.text = T.comprar
-	comprar.uri = "https://fliperstudio.com/account#ia"
+	comprar.uri = "https://fliperstudio.com/pricing?ref=engine"
 	comprar.add_theme_color_override("font_color", DOURADO)
 	comprar.visible = false
 	linha.add_child(comprar)
@@ -225,12 +227,26 @@ func _atualizar_plano() -> void:
 	if d.get("dono", false):
 		plano.text = T.plano_dono
 		comprar.visible = false
-	elif str(d.get("plano", "")) == "pago":
-		plano.text = T.plano_pago % [int(d.get("creditos", 0)), int(d.get("gratis_hoje", 0)), int(d.get("gratis_limite", 0))]
-		comprar.visible = true
+	elif str(d.get("plano", "")) in ["pro", "max"]:
+		var p := str(d.get("plano"))
+		plano.text = T.plano_pago % [str(d.get("plano_nome", p)), int(d.get("janela_pct", 0)), int(d.get("semana_pct", 0))]
+		var links = d.get("assinar", {})
+		comprar.visible = p == "pro"
+		comprar.text = T.subir
+		if links is Dictionary and links.get("max"):
+			comprar.uri = str(links.get("max"))
+		plano_modelo = "fliper-" + p
 	else:
-		plano.text = T.plano_gratis % [int(d.get("gratis_hoje", 0)), int(d.get("gratis_limite", 0)), int(d.get("creditos", 0))]
+		plano.text = T.plano_gratis % [int(d.get("gratis_hoje", 0)), int(d.get("gratis_limite", 0))]
+		var links = d.get("assinar", {})
 		comprar.visible = true
+		comprar.text = T.comprar
+		if links is Dictionary and links.get("pro"):
+			comprar.uri = str(links.get("pro"))
+		plano_modelo = ""
+	# com plano, a IA da Fliper usa o modelo do plano (a não ser que a pessoa tenha escrito outro)
+	if campo_modelo and campo_modelo.text.strip_edges() == "" and agente.provedor == "fliper":
+		agente.modelo = plano_modelo
 	plano.tooltip_text = str(d.get("email", ""))
 
 
@@ -309,4 +325,4 @@ func _aplicar() -> void:
 		_atualizar_plano.call_deferred()
 	agente.provedor = str(escolha.get_item_metadata(escolha.selected))
 	agente.chave = campo_chave.text.strip_edges()
-	agente.modelo = campo_modelo.text.strip_edges()
+	agente.modelo = campo_modelo.text.strip_edges() if campo_modelo.text.strip_edges() != "" else plano_modelo

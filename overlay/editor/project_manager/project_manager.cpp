@@ -119,7 +119,7 @@ void ProjectManager::_notification(int p_what) {
 			SceneTree::get_singleton()->get_root()->set_title(GODOT_VERSION_NAME + String(" - ") + TTR("Project Manager", "Application"));
 
 			const String line1 = TTR("You don't have any projects yet.");
-			const String line2 = TTR("Get started by creating a new one,\nimporting one that exists, or by downloading a project template from the Asset Store!");
+			const String line2 = TTR("Create a new one, or open \"My first game\" and ask the Fliper AI panel for anything.");
 			empty_list_message->set_text(vformat("[center][b]%s[/b] %s[/center]", line1, line2));
 
 			_titlebar_resized();
@@ -497,7 +497,7 @@ void ProjectManager::_update_list_placeholder() {
 	const int network_mode = EDITOR_GET("network/connection/network_mode");
 	if (network_mode == EditorSettings::NETWORK_OFFLINE) {
 		empty_list_open_assetlib->set_text(TTRC("Go Online and Open Asset Store"));
-		empty_list_online_warning->set_visible(true);
+		empty_list_online_warning->set_visible(false); // Fliper: o aviso era da loja do Godot
 	} else {
 		empty_list_open_assetlib->set_text(TTRC("Open Asset Store"));
 		empty_list_online_warning->set_visible(false);
@@ -885,7 +885,7 @@ void ProjectManager::_open_recovery_mode_ask(bool manual) {
 	// Only show the initial crash preamble if this popup wasn't manually triggered.
 	if (!manual) {
 		recovery_mode_details +=
-				TTR("It looks like Godot crashed when opening this project the last time. If you're having problems editing this project, you can try to open it in Recovery Mode.") +
+				TTR("It looks like Fliper Engine crashed when opening this project the last time. If you're having problems editing this project, you can try to open it in Recovery Mode.") +
 				String::utf8("\n\n");
 	}
 
@@ -1650,6 +1650,7 @@ ProjectManager::ProjectManager() {
 				empty_list_online_warning->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 				empty_list_online_warning->set_text(TTRC("Note: The Asset Store requires an online connection and involves sending data over the internet."));
 				empty_list_placeholder->add_child(empty_list_online_warning);
+				empty_list_online_warning->hide(); // Fliper: só falava da loja do Godot
 			}
 
 			// The side bar with the edit, run, rename, etc. buttons.
@@ -1745,7 +1746,7 @@ ProjectManager::ProjectManager() {
 		asset_library_filler->set_name("AssetLibraryTab");
 		Button *asset_library_toggle = _add_main_view(MAIN_VIEW_ASSETLIB, TTRC("Asset Store"), Ref<Texture2D>(), asset_library_filler);
 		asset_library_toggle->set_disabled(true);
-		asset_library_toggle->set_tooltip_text(TTRC("Asset Store not available (due to using Web editor, or because SSL support disabled)."));
+		asset_library_toggle->hide(); // Fliper: sem a loja do Godot (os assets vêm pela IA e pela Fliper Feira)
 	}
 
 	// Footer bar.
