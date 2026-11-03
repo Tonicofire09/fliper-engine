@@ -13,6 +13,12 @@ const ACOES := {
 	"cima": [KEY_W, KEY_UP], "baixo": [KEY_S, KEY_DOWN], "esquerda": [KEY_A, KEY_LEFT],
 	"direita": [KEY_D, KEY_RIGHT], "acao": [KEY_SPACE, KEY_ENTER], "pausa": [KEY_ESCAPE, KEY_P],
 }
+# controle de videogame (Steam Deck, Xbox, PlayStation): direcional, analógico esquerdo, A e Start
+const CONTROLE := {
+	"cima": [JOY_BUTTON_DPAD_UP], "baixo": [JOY_BUTTON_DPAD_DOWN], "esquerda": [JOY_BUTTON_DPAD_LEFT],
+	"direita": [JOY_BUTTON_DPAD_RIGHT], "acao": [JOY_BUTTON_A], "pausa": [JOY_BUTTON_START],
+}
+const ANALOGICO := { "esquerda": [JOY_AXIS_LEFT_X, -1.0], "direita": [JOY_AXIS_LEFT_X, 1.0], "cima": [JOY_AXIS_LEFT_Y, -1.0], "baixo": [JOY_AXIS_LEFT_Y, 1.0] }
 
 var args := {}
 var acumulado := 0.0
@@ -39,10 +45,25 @@ func _mapear_controles() -> void:
 			var ev := InputEventKey.new()
 			ev.physical_keycode = k
 			InputMap.action_add_event(acao, ev)
+		for b in CONTROLE.get(acao, []):
+			var bt := InputEventJoypadButton.new()
+			bt.button_index = b
+			InputMap.action_add_event(acao, bt)
+		if ANALOGICO.has(acao):
+			var ax := InputEventJoypadMotion.new()
+			ax.axis = ANALOGICO[acao][0]
+			ax.axis_value = ANALOGICO[acao][1]
+			InputMap.action_add_event(acao, ax)
 
 
 func _unhandled_input(ev: InputEvent) -> void:
 	if args.has("cena"):
+		return
+	# F11 (ou Alt+Enter): tela cheia, como todo jogo de PC
+	if ev is InputEventKey and ev.pressed and not ev.echo and (ev.keycode == KEY_F11 or (ev.keycode == KEY_ENTER and ev.alt_pressed)):
+		var cheia := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if cheia else DisplayServer.WINDOW_MODE_FULLSCREEN)
+		get_viewport().set_input_as_handled()
 		return
 	for acao in ACOES:
 		if ev.is_action_pressed(acao, false):
