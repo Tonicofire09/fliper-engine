@@ -4,7 +4,6 @@ extends "res://scripts/nucleo/modulo.gd"
 ## Emite: "tremer", "som", "texto". Ajuste as constantes abaixo para o seu jogo.
 
 const VIDAS := 3
-const DICA := "WASD / setas anda  ·  espaço pula"
 const BRANCO := Color("#f2f2f2")
 const OURO := Color("#ffc531")
 const ROSA := Color("#ff2e88")
@@ -24,7 +23,15 @@ func _init() -> void:
 
 
 func titulo() -> String:
-	return String(ProjectSettings.get_setting("application/config/name", "FLIPER")).to_upper()
+	return "NEON BRAWL"
+
+
+static func pt() -> bool:
+	return OS.get_locale_language() == "pt"
+
+
+func dica() -> String:
+	return "setas/WASD andam  ·  espaço bate (3× = combo)" if pt() else "arrows/WASD move  ·  space punches (3× = combo)"
 
 
 func novo_jogo() -> void:
@@ -76,7 +83,7 @@ func evento(nome: String, dados: Dictionary) -> void:
 			_acabou()
 		"fase":
 			nivel = int(dados.get("n", nivel + 1))
-			_avisar("FASE %d" % nivel)
+			_avisar(("RUA %d" if pt() else "STREET %d") % nivel)
 			Nucleo.emitir("som", {"nome": "fase"})
 
 
@@ -111,16 +118,17 @@ func desenhar_hud(tela: Node2D) -> void:
 	for i in mini(vidas, 8):
 		tela.draw_rect(Rect2(96 + i * 12, 7, 8, 8), ROSA)
 	if aviso_t > 0.0 and fase == "jogando":
-		tela.draw_string(f, Vector2(0, 190), aviso, HORIZONTAL_ALIGNMENT_CENTER, 640, 30, OURO)
+		tela.draw_string(f, Vector2(0, 150), aviso, HORIZONTAL_ALIGNMENT_CENTER, 640, 30, OURO)
 	if fase == "jogando":
 		return
 	tela.draw_rect(Rect2(0, 22, 640, 338), Color(0.02, 0.01, 0.05, 0.74))
-	var t: String = {"inicio": titulo(), "pausa": "PAUSA", "fim": "GAME OVER"}[fase]
-	var sub: String = {"inicio": DICA, "pausa": "Esc pausa", "fim": "%d pontos%s" % [pontos, "  ·  NOVO RECORDE!" if pontos > 0 and pontos >= recorde else ""]}[fase]
+	var t: String = {"inicio": titulo(), "pausa": "PAUSA" if pt() else "PAUSED", "fim": "GAME OVER"}[fase]
+	var recorde_txt := ("  ·  NOVO RECORDE!" if pt() else "  ·  NEW HIGH SCORE!") if pontos > 0 and pontos >= recorde else ""
+	var sub: String = {"inicio": dica(), "pausa": "Esc", "fim": ("%d pontos" if pt() else "%d points") % pontos + recorde_txt}[fase]
 	tela.draw_string(f, Vector2(3, 173), t, HORIZONTAL_ALIGNMENT_CENTER, 640, 40, ROSA.darkened(0.5))
 	tela.draw_string(f, Vector2(0, 170), t, HORIZONTAL_ALIGNMENT_CENTER, 640, 40, ROSA if fase == "fim" else BRANCO)
 	tela.draw_string(f, Vector2(0, 204), sub, HORIZONTAL_ALIGNMENT_CENTER, 640, 14, CINZA)
-	tela.draw_string(f, Vector2(0, 256), "ESPAÇO para %s" % ("voltar" if fase == "pausa" else "jogar"), HORIZONTAL_ALIGNMENT_CENTER, 640, 15, OURO)
+	tela.draw_string(f, Vector2(0, 256), ("ESPAÇO para %s" % ("voltar" if fase == "pausa" else "jogar")) if pt() else ("SPACE to %s" % ("resume" if fase == "pausa" else "play")), HORIZONTAL_ALIGNMENT_CENTER, 640, 15, OURO)
 
 
 func salvar() -> Dictionary:

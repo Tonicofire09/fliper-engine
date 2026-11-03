@@ -2,7 +2,7 @@ extends Node
 ## Autoload "Nucleo": guarda a lista de módulos e repassa os ganchos de modulo.gd para todos eles.
 ## A lista MODULOS é mantida por ferramentas/novo_modulo.py (não precisa editar à mão).
 
-const MODULOS := ["Partida", "Som", "Jogador", "Gemas", "Perigos", "Visual"]  # gerenciado por novo_modulo.py
+const MODULOS := ["Partida", "Som", "Palco", "Heroi", "Gangue", "Itens"]  # gerenciado por novo_modulo.py
 const DT := 1.0 / 60.0
 const SAVE := "user://save.json"
 

@@ -1,0 +1,26 @@
+{
+ "quadro": {
+  "largura": 64,
+  "altura": 64
+ },
+ "animacoes": {
+  "faisca": {
+   "linha": 0,
+   "quadros": 5,
+   "fps": 24,
+   "loop": false
+  },
+  "poeira": {
+   "linha": 1,
+   "quadros": 5,
+   "fps": 14,
+   "loop": false
+  },
+  "forte": {
+   "linha": 2,
+   "quadros": 5,
+   "fps": 20,
+   "loop": false
+  }
+ }
+}

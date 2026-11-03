@@ -1,0 +1,40 @@
+{
+ "quadro": {
+  "largura": 64,
+  "altura": 64
+ },
+ "animacoes": {
+  "barril": {
+   "linha": 0,
+   "coluna": 0
+  },
+  "barril_quebrado": {
+   "linha": 0,
+   "coluna": 1
+  },
+  "caixa": {
+   "linha": 0,
+   "coluna": 2
+  },
+  "frango": {
+   "linha": 0,
+   "coluna": 3
+  },
+  "lata": {
+   "linha": 1,
+   "coluna": 0
+  },
+  "moeda": {
+   "linha": 2,
+   "quadros": 4,
+   "fps": 8,
+   "loop": true
+  },
+  "tontura": {
+   "linha": 3,
+   "quadros": 4,
+   "fps": 8,
+   "loop": true
+  }
+ }
+}

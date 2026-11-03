@@ -1,6 +1,7 @@
 extends "res://scripts/nucleo/modulo.gd"
 ## Som (biblioteca do kit): efeitos 8-bit sintetizados na hora, sem arquivo de áudio nem licença.
-## Toque emitindo "som" {nome}. Nomes: tiro, explosao, pulo, moeda, dano, power, fase, inicio, fim, toque, linha.
+## Toque emitindo "som" {nome}. Nomes: tiro, explosao, pulo, moeda, dano, power, fase, inicio, fim, toque, linha,
+## golpe (vento do soco), soco (pegou), forte (chute/queda), quebra (barril), chefe (o chefe entrou).
 ## Cada som = [onda, freq inicial, freq final, duração s, volume, repetir arpejo]. Crie os seus em SONS.
 
 const TAXA := 22050
@@ -16,6 +17,11 @@ const SONS := {
 	"fim": ["serra", 440.0, 110.0, 0.8, 0.4, 0],
 	"toque": ["quadrada", 660.0, 660.0, 0.05, 0.25, 0],
 	"linha": ["triangulo", 660.0, 1760.0, 0.25, 0.4, 2],
+	"golpe": ["ruido", 1800.0, 900.0, 0.05, 0.18, 0],
+	"soco": ["ruido", 900.0, 200.0, 0.09, 0.5, 0],
+	"forte": ["ruido", 600.0, 70.0, 0.22, 0.6, 0],
+	"quebra": ["ruido", 1400.0, 300.0, 0.16, 0.45, 0],
+	"chefe": ["serra", 110.0, 220.0, 0.6, 0.4, 3],
 }
 
 var streams := {}

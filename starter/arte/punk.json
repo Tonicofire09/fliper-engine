@@ -1,0 +1,119 @@
+{
+ "quadro": {
+  "largura": 96,
+  "altura": 96
+ },
+ "animacoes": {
+  "parado": {
+   "linha": 0,
+   "quadros": 4,
+   "fps": 4,
+   "loop": true,
+   "duracoes": [
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  "andar": {
+   "linha": 1,
+   "quadros": 6,
+   "fps": 10,
+   "loop": true,
+   "duracoes": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  "soco": {
+   "linha": 2,
+   "quadros": 3,
+   "fps": 14,
+   "loop": false,
+   "duracoes": [
+    1,
+    2,
+    1
+   ]
+  },
+  "soco2": {
+   "linha": 3,
+   "quadros": 3,
+   "fps": 14,
+   "loop": false,
+   "duracoes": [
+    1,
+    2,
+    1
+   ]
+  },
+  "chute": {
+   "linha": 4,
+   "quadros": 3,
+   "fps": 12,
+   "loop": false,
+   "duracoes": [
+    1,
+    3,
+    1
+   ]
+  },
+  "preparar": {
+   "linha": 5,
+   "quadros": 2,
+   "fps": 6,
+   "loop": false,
+   "duracoes": [
+    1,
+    1
+   ]
+  },
+  "golpe": {
+   "linha": 6,
+   "quadros": 2,
+   "fps": 12,
+   "loop": false,
+   "duracoes": [
+    2,
+    1
+   ]
+  },
+  "dano": {
+   "linha": 7,
+   "quadros": 2,
+   "fps": 10,
+   "loop": false,
+   "duracoes": [
+    1,
+    1
+   ]
+  },
+  "vitoria": {
+   "linha": 8,
+   "quadros": 2,
+   "fps": 4,
+   "loop": true,
+   "duracoes": [
+    1,
+    1
+   ]
+  },
+  "cair": {
+   "linha": 9,
+   "quadros": 4,
+   "fps": 12,
+   "loop": false,
+   "duracoes": [
+    1,
+    1,
+    1,
+    6
+   ]
+  }
+ }
+}

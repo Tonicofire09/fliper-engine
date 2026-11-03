@@ -12,10 +12,10 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 Nucleo="*res://scripts/nucleo/nucleo.gd"
 Partida="*res://scripts/modulos/mod_partida.gd"
 Som="*res://scripts/modulos/mod_som.gd"
-Jogador="*res://scripts/modulos/mod_jogador.gd"
-Gemas="*res://scripts/modulos/mod_gemas.gd"
-Perigos="*res://scripts/modulos/mod_perigos.gd"
-Visual="*res://scripts/modulos/mod_visual.gd"
+Palco="*res://scripts/modulos/mod_palco.gd"
+Heroi="*res://scripts/modulos/mod_heroi.gd"
+Gangue="*res://scripts/modulos/mod_gangue.gd"
+Itens="*res://scripts/modulos/mod_itens.gd"
 
 [display]
 
@@ -31,7 +31,6 @@ window/stretch/scale_mode="integer"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/canvas_textures/default_texture_filter=0
-anti_aliasing/quality/msaa_3d=2
 
 [editor_plugins]
 
