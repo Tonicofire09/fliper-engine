@@ -1,4 +1,4 @@
-My first game (Fliper Engine)
+Neon Brawl (your first game in Fliper Engine)
 
 Neon Brawl: a small 2D pixel-art street brawler to start from. Walk the neon avenue, beat the gang, break barrels,
 eat the chicken, take down the boss.

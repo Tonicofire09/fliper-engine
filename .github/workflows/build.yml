@@ -58,8 +58,8 @@ jobs:
       - name: Empacotar
         run: |
           mkdir -p dist/FliperEngine && cp motor/bin/godot.linuxbsd.editor.x86_64 dist/FliperEngine/FliperEngine.x86_64
-          cp -r starter "dist/FliperEngine/My first game"
-          printf '#!/bin/sh\ncd "$(dirname "$0")" && exec ./FliperEngine.x86_64 -e --path "My first game"\n' > dist/FliperEngine/fliper.sh && chmod +x dist/FliperEngine/fliper.sh
+          cp -r starter "dist/FliperEngine/Neon Brawl"
+          printf '#!/bin/sh\ncd "$(dirname "$0")" && exec ./FliperEngine.x86_64 -e --path "Neon Brawl"\n' > dist/FliperEngine/fliper.sh && chmod +x dist/FliperEngine/fliper.sh
           cp motor/LICENSE.txt motor/COPYRIGHT.txt dist/FliperEngine/ && tar -czf FliperEngine-linux-x86_64.tar.gz -C dist FliperEngine
       - uses: actions/upload-artifact@v4
         with: { name: linux, path: FliperEngine-linux-x86_64.tar.gz }

@@ -24,15 +24,15 @@ ArchitecturesAllowed=x64compatible
 [Files]
 Source: "dist\FliperEngine\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 ; o primeiro jogo, com o painel da IA Fliper ligado: a Engine abre direto nele (não sobrescreve se já existir)
-Source: "starter\*"; DestDir: "{userdocs}\Fliper\My first game"; Flags: recursesubdirs onlyifdoesntexist uninsneveruninstall
+Source: "starter\*"; DestDir: "{userdocs}\Fliper\Neon Brawl"; Flags: recursesubdirs onlyifdoesntexist uninsneveruninstall
 
 [Icons]
-Name: "{group}\Fliper Engine"; Filename: "{app}\FliperEngine.exe"; Parameters: "-e --path ""{userdocs}\Fliper\My first game"""
+Name: "{group}\Fliper Engine"; Filename: "{app}\FliperEngine.exe"; Parameters: "-e --path ""{userdocs}\Fliper\Neon Brawl"""
 Name: "{group}\Fliper Engine (all projects)"; Filename: "{app}\FliperEngine.exe"; Parameters: "--project-manager"
-Name: "{autodesktop}\Fliper Engine"; Filename: "{app}\FliperEngine.exe"; Parameters: "-e --path ""{userdocs}\Fliper\My first game"""; Tasks: atalho
+Name: "{autodesktop}\Fliper Engine"; Filename: "{app}\FliperEngine.exe"; Parameters: "-e --path ""{userdocs}\Fliper\Neon Brawl"""; Tasks: atalho
 
 [Tasks]
 Name: atalho; Description: "Create a desktop shortcut"
 
 [Run]
-Filename: "{app}\FliperEngine.exe"; Parameters: "-e --path ""{userdocs}\Fliper\My first game"""; Description: "Open Fliper Engine"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\FliperEngine.exe"; Parameters: "-e --path ""{userdocs}\Fliper\Neon Brawl"""; Description: "Open Fliper Engine"; Flags: nowait postinstall skipifsilent

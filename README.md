@@ -3,7 +3,7 @@
 # Fliper Engine
 
 **A game engine with an AI studio built in.** Talk, and the Fliper AI plans, codes, draws, tests and opens your game.
-Everything Godot does (2D and 3D, PBR, physics, animation, export to desktop, mobile and web), plus the Fliper panel.
+Everything Godot does (2D, physics, animation, shaders, export to desktop, mobile and web), plus the Fliper panel.
 
 - **Download:** [fliperstudio.com/download](https://fliperstudio.com/download/) (Windows, macOS, Linux) or [Releases](../../releases).
 - **No install?** Make games in the browser at [fliperstudio.com/studio](https://fliperstudio.com/studio/).

@@ -119,7 +119,7 @@ void ProjectManager::_notification(int p_what) {
 			SceneTree::get_singleton()->get_root()->set_title(GODOT_VERSION_NAME + String(" - ") + TTR("Project Manager", "Application"));
 
 			const String line1 = TTR("You don't have any projects yet.");
-			const String line2 = TTR("Create a new one, or open \"My first game\" and ask the Fliper AI panel for anything.");
+			const String line2 = TTR("Create a new one, or open \"Neon Brawl\" and ask the Fliper AI panel for anything.");
 			empty_list_message->set_text(vformat("[center][b]%s[/b] %s[/center]", line1, line2));
 
 			_titlebar_resized();
