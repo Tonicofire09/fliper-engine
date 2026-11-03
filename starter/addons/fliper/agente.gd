@@ -8,7 +8,7 @@ signal agiu(resumo: String)
 signal terminou
 
 const PROVEDORES := {
-	"fliper": {"nome": "Fliper AI (free every day)", "url": "https://fliperstudio.com/ia/v1", "modelo": "fliper-gratis"},
+	"fliper": {"nome": "Fliper AI", "url": "https://fliperstudio.com/ia/v1", "modelo": "fliper-pro"},
 	"openrouter": {"nome": "My OpenRouter key", "url": "https://openrouter.ai/api/v1", "modelo": "poolside/laguna-s-2.1:free"},
 	"openai": {"nome": "OpenAI", "url": "https://api.openai.com/v1", "modelo": "gpt-5-mini"},
 }
